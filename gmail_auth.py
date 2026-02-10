@@ -1,27 +1,54 @@
 """
 Gmail API OAuth2 Authentication Module.
 Handles the OAuth2 flow and provides a Gmail service object.
+Supports both local (credentials.json) and deployed (env var) credential sources.
 """
 
 import os
 import json
+import tempfile
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import Flow
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 
 SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
-CREDENTIALS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'credentials.json')
-TOKEN_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'token.json')
-REDIRECT_URI = 'http://127.0.0.1:5000/api/auth/callback'
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CREDENTIALS_FILE = os.path.join(BASE_DIR, 'credentials.json')
+TOKEN_FILE = os.path.join(BASE_DIR, 'token.json')
+
+
+def _get_redirect_uri():
+    """Determine redirect URI based on environment."""
+    render_url = os.environ.get('RENDER_EXTERNAL_URL')
+    if render_url:
+        return f"{render_url}/api/auth/callback"
+    return os.environ.get('REDIRECT_URI', 'http://127.0.0.1:5000/api/auth/callback')
+
+
+def _get_credentials_file():
+    """
+    Get path to credentials.json.
+    In production, credentials can be supplied via GOOGLE_CREDENTIALS env var
+    containing the full JSON content.
+    """
+    # If the env var is set, write it to a temp file and return that path
+    creds_json = os.environ.get('GOOGLE_CREDENTIALS')
+    if creds_json:
+        tmp = os.path.join(tempfile.gettempdir(), 'google_credentials.json')
+        with open(tmp, 'w') as f:
+            f.write(creds_json)
+        return tmp
+    return CREDENTIALS_FILE
 
 
 def get_auth_flow():
     """Create and return an OAuth2 flow for Gmail API."""
+    creds_file = _get_credentials_file()
     flow = Flow.from_client_secrets_file(
-        CREDENTIALS_FILE,
+        creds_file,
         scopes=SCOPES,
-        redirect_uri=REDIRECT_URI
+        redirect_uri=_get_redirect_uri()
     )
     return flow
 

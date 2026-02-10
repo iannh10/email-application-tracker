@@ -125,10 +125,14 @@ def stats():
 
 # ─── Main ────────────────────────────────────────────────────────────────────────
 
+# Initialize the database at import time (needed for gunicorn in production)
+init_db()
+
 if __name__ == '__main__':
-    init_db()
+    port = int(os.environ.get('PORT', 5000))
     print("\n╔══════════════════════════════════════════════════════╗")
     print("║     Job Application Email Tracker                   ║")
-    print("║     Open: http://localhost:5000                      ║")
+    print(f"║     Open: http://localhost:{port}                      ║")
     print("╚══════════════════════════════════════════════════════╝\n")
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=port)
+

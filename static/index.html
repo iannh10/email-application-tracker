@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Track and classify your job application emails from Gmail">
+    <title>Job Application Email Tracker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📬</text></svg>">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="app-title">
+                <div class="logo-mark">
+                    <span>📬</span>
+                </div>
+                <div>
+                    <h1>Job Email Tracker</h1>
+                    <p class="app-subtitle">Gmail-powered application insights</p>
+                </div>
+            </div>
+            <div class="header-actions" id="headerActions"></div>
+        </header>
+
+        <!-- Main Content -->
+        <main id="mainContent"></main>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <span>Built with Gmail API</span>
+            <span class="footer-dot">·</span>
+            <span>Emails are read-only & never stored externally</span>
+        </footer>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="/static/app.js"></script>
+</body>
+
+</html>

@@ -4,6 +4,8 @@ Main entry point with API endpoints and OAuth callback handling.
 """
 
 import os
+import threading
+from datetime import datetime, timezone
 from flask import Flask, request, jsonify, redirect, send_from_directory
 from gmail_auth import get_auth_url, exchange_code, is_authenticated, logout
 from email_fetcher import fetch_emails
@@ -123,10 +125,80 @@ def stats():
     return jsonify(get_stats())
 
 
+# ─── Auto-Scan Scheduler ─────────────────────────────────────────────────────────
+
+AUTO_SCAN_INTERVAL = int(os.environ.get('AUTO_SCAN_INTERVAL', 1800))  # 30 min default
+
+auto_scan_status = {
+    'last_scan': None,
+    'next_scan': None,
+    'last_result': None,
+    'is_running': False,
+}
+
+_scheduler_timer = None
+
+
+def _run_auto_scan():
+    """Background task: scan and classify emails if authenticated."""
+    global _scheduler_timer
+    auto_scan_status['is_running'] = True
+
+    try:
+        if is_authenticated():
+            print(f"[Auto-Scan] Starting scheduled scan at {datetime.now(timezone.utc).isoformat()}")
+            raw = fetch_emails(max_results=1000)
+            classified = classify_emails(raw)
+            count = 0
+            for email in classified:
+                upsert_email(email)
+                count += 1
+            auto_scan_status['last_scan'] = datetime.now(timezone.utc).isoformat()
+            auto_scan_status['last_result'] = f'Scanned {count} emails'
+            print(f"[Auto-Scan] Done — processed {count} emails.")
+        else:
+            auto_scan_status['last_result'] = 'Skipped (not authenticated)'
+            print("[Auto-Scan] Skipped — user not authenticated.")
+    except Exception as e:
+        auto_scan_status['last_result'] = f'Error: {str(e)}'
+        print(f"[Auto-Scan] Error: {e}")
+    finally:
+        auto_scan_status['is_running'] = False
+        # Schedule next run
+        _scheduler_timer = threading.Timer(AUTO_SCAN_INTERVAL, _run_auto_scan)
+        _scheduler_timer.daemon = True
+        _scheduler_timer.start()
+        auto_scan_status['next_scan'] = datetime.now(timezone.utc).isoformat()
+
+
+def start_scheduler():
+    """Start the background auto-scan scheduler."""
+    global _scheduler_timer
+    # Run first scan after a short delay (let the app boot)
+    _scheduler_timer = threading.Timer(10, _run_auto_scan)
+    _scheduler_timer.daemon = True
+    _scheduler_timer.start()
+    print(f"[Auto-Scan] Scheduler started — scanning every {AUTO_SCAN_INTERVAL // 60} minutes.")
+
+
+@app.route('/api/autoscan/status')
+def autoscan_status():
+    """Get the auto-scan scheduler status."""
+    return jsonify({
+        'enabled': True,
+        'interval_minutes': AUTO_SCAN_INTERVAL // 60,
+        **auto_scan_status,
+    })
+
+
 # ─── Main ────────────────────────────────────────────────────────────────────────
 
 # Initialize the database at import time (needed for gunicorn in production)
 init_db()
+
+# Start the auto-scan scheduler (only once, avoid double-start in debug reloader)
+if os.environ.get('WERKZEUG_RUN_MAIN') == 'true' or not os.environ.get('WERKZEUG_SERVER_FD'):
+    start_scheduler()
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))

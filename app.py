@@ -75,7 +75,7 @@ def scan_emails():
         return jsonify({'error': 'Not authenticated. Please connect Gmail first.'}), 401
 
     try:
-        max_results = request.json.get('max_results', 1000) if request.json else 1000
+        max_results = request.json.get('max_results', 2000) if request.json else 2000
         raw_emails = fetch_emails(max_results=max_results)
         classified = classify_emails(raw_emails)
 
@@ -127,7 +127,7 @@ def stats():
 
 # ─── Auto-Scan Scheduler ─────────────────────────────────────────────────────────
 
-AUTO_SCAN_INTERVAL = int(os.environ.get('AUTO_SCAN_INTERVAL', 1800))  # 30 min default
+AUTO_SCAN_INTERVAL = int(os.environ.get('AUTO_SCAN_INTERVAL', 900))  # 15 min default
 
 auto_scan_status = {
     'last_scan': None,
@@ -147,7 +147,7 @@ def _run_auto_scan():
     try:
         if is_authenticated():
             print(f"[Auto-Scan] Starting scheduled scan at {datetime.now(timezone.utc).isoformat()}")
-            raw = fetch_emails(max_results=1000)
+            raw = fetch_emails(max_results=2000)
             classified = classify_emails(raw)
             count = 0
             for email in classified:

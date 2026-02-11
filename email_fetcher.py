@@ -55,7 +55,7 @@ def build_search_query(max_results=500):
     return query
 
 
-def fetch_emails(max_results=1000):
+def fetch_emails(max_results=2000):
     """Fetch job-related emails from Gmail."""
     service = get_gmail_service()
     if not service:

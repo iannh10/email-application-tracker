@@ -32,50 +32,71 @@ REJECTION_PATTERNS = [
     (r'will\s+not\s+be\s+extending\s+an\s+offer', 0.92),
 ]
 
-INTERVIEW_PATTERNS = [
-    # ── Explicit interview / screening invitations only ──
-    (r'schedule\s+(an?\s+)?interview', 0.95),
-    (r'interview\s+invitation', 0.95),
-    (r'invite\s+you\s+to\s+(an?\s+)?interview', 0.95),
-    (r'we\'d\s+like\s+to\s+invite\s+you', 0.93),
-    (r'like\s+to\s+(schedule|set\s+up|arrange)\s+(a\s+)?(interview|screen)', 0.93),
-    (r'phone\s+screen', 0.90),
-    (r'phone\s+interview', 0.90),
-    (r'video\s+interview', 0.90),
-    (r'virtual\s+interview', 0.90),
-    (r'onsite\s+interview', 0.92),
-    (r'on-site\s+interview', 0.92),
-    (r'technical\s+interview', 0.92),
-    (r'coding\s+(challenge|assessment|interview)', 0.88),
-    (r'next\s+round\s+(of\s+)?interview', 0.88),
-    (r'next\s+step(s)?\s+in\s+(the|our)\s+interview', 0.88),
-    (r'meet\s+(with\s+)?(the|our)\s+hiring\s+manager', 0.85),
-    (r'recruiter\s+screen', 0.88),
-    (r'panel\s+interview', 0.92),
-    (r'case\s+(study|interview)', 0.85),
-    (r'take-home\s+(assignment|assessment|project)', 0.88),
-    (r'assessment\s+(link|invitation|test)', 0.85),
-    (r'hackerrank|codility|leetcode|codesignal', 0.85),
-    (r'moved\s+(you\s+)?forward\s+to\s+(the|an?)\s+(interview|screen)', 0.92),
-    (r'advance(d)?\s+(you\s+)?to\s+(the|an?)\s+(interview|next)\s+(round|stage|step)', 0.90),
-    (r'selected\s+for\s+(an?\s+)?interview', 0.92),
+# ─── INTERVIEW: Strict multi-signal classification ─────────────────────────────
+# Tier 1 — Definitive: the email explicitly invites YOU to an interview.
+#          A single match is enough to classify.
+INTERVIEW_TIER1_PATTERNS = [
+    r'(we\'?d?|i\'?d?)\s+like\s+to\s+invite\s+you\s+(to|for)\s+(an?\s+)?interview',
+    r'invite\s+you\s+to\s+(an?\s+)?(phone|video|virtual|on-?site|technical|panel|final)\s*(round)?\s*interview',
+    r'you\s+(have\s+been|are|were)\s+(selected|chosen|invited)\s+(for|to)\s+(an?\s+)?interview',
+    r'your\s+interview\s+(is|has\s+been)\s+(scheduled|confirmed|set)',
+    r'(pleased|happy|excited)\s+to\s+(invite|advance|move)\s+you\s+(to|forward)',
+    r'we\s+are\s+(moving|advancing)\s+you\s+(forward|to\s+the\s+next)',
+    r'moved\s+you\s+forward\s+to\s+(the|an?)\s+(interview|screen|next\s+round)',
+    r'advance(d)?\s+you\s+to\s+(the|an?)\s+(interview|next)\s+(round|stage|step)',
+    r'like\s+to\s+schedule\s+(an?\s+)?interview\s+with\s+you',
+    r'schedule\s+your\s+interview',
 ]
 
+# Tier 2 — Contextual: these keywords suggest an interview, but only classify
+#          if an ACTION SIGNAL is also present (confirming it's directed at you).
+INTERVIEW_TIER2_KEYWORDS = [
+    r'phone\s+screen',
+    r'phone\s+interview',
+    r'video\s+interview',
+    r'virtual\s+interview',
+    r'on-?site\s+interview',
+    r'technical\s+interview',
+    r'panel\s+interview',
+    r'recruiter\s+screen',
+    r'coding\s+(challenge|assessment)',
+    r'take-?home\s+(assignment|assessment|project|test)',
+    r'case\s+study',
+    r'hackerrank|codility|leetcode|codesignal',
+    r'assessment\s+(link|invitation|test)',
+]
+
+# Action signals that confirm the email is directed at the recipient
+INTERVIEW_ACTION_SIGNALS = [
+    r'please\s+(confirm|select|choose|pick|let\s+us\s+know)',
+    r'(click|use)\s+(the\s+)?(link|button|calendar)',
+    r'calendly\.com|goodtime\.io|schedule\.\w+',
+    r'book\s+(a|your)\s+(time|slot)',
+    r'pick\s+a\s+(time|slot)',
+    r'(what|when)\s+(is|are)\s+your\s+(availability|available)',
+    r'please\s+complete\s+(the|this|your)',
+    r'attached\s+(is|you\s+will\s+find)',
+    r'(here\s+is|here\s+are)\s+(the|your)\s+(details|link|invite)',
+    r'looking\s+forward\s+to\s+(speaking|meeting|talking)\s+with\s+you',
+    r'(we|i)\s+(look|am\s+looking)\s+forward\s+to\s+(your|meeting)',
+]
+
+# ─── OFFER: Strict multi-signal classification ─────────────────────────────────
+# Only classify as offer when the email explicitly extends an offer TO the recipient.
 OFFER_PATTERNS = [
-    (r'(pleased|happy|excited)\s+to\s+(extend|offer|present)', 0.95),
-    (r'offer\s+letter', 0.95),
-    (r'offer\s+of\s+employment', 0.95),
-    (r'formal\s+offer', 0.93),
-    (r'job\s+offer', 0.93),
-    (r'compensation\s+(package|details)', 0.85),
-    (r'(annual|base)\s+salary', 0.85),
-    (r'start\s+date', 0.75),
+    (r'(pleased|happy|excited|delighted)\s+to\s+(extend|offer|present)\s+(you|an\s+offer)', 0.98),
+    (r'we\s+would\s+like\s+to\s+offer\s+you', 0.98),
+    (r'(extend(ing)?|present(ing)?)\s+(you\s+)?(an?\s+)?(formal\s+)?offer\s+of\s+employment', 0.97),
+    (r'your\s+offer\s+letter\s+(is|has\s+been)', 0.96),
+    (r'(attached|enclosed|find)\s+(is\s+)?(your\s+)?offer\s+letter', 0.96),
+    (r'sign\s+your\s+offer\s+letter', 0.95),
+    (r'accept\s+(the|this|our|your)\s+offer', 0.93),
+    (r'offer\s+(has\s+been|is\s+being)\s+(prepared|finalized|sent)', 0.92),
+    (r'your\s+compensation\s+(package|details)\s+(is|are|include)', 0.90),
+    (r'your\s+(annual|base|starting)\s+salary\s+(will\s+be|is)', 0.90),
     (r'welcome\s+to\s+the\s+team', 0.88),
-    (r'we\s+would\s+like\s+to\s+offer\s+you', 0.95),
-    (r'contingent\s+offer', 0.90),
-    (r'background\s+check.*offer', 0.82),
-    (r'sign\s+(the|your)\s+offer', 0.92),
-    (r'accept\s+(the|this|our)\s+offer', 0.90),
+    (r'contingent\s+(upon|on).*offer', 0.88),
+    (r'we\s+are\s+(pleased|excited)\s+to\s+welcome\s+you', 0.92),
 ]
 
 FOLLOWUP_PATTERNS = [
@@ -276,9 +297,21 @@ def classify_email(email_data):
     # Run all pattern matchers
     results = []
 
+    # ── Interview: Two-tier detection ──
+    # Tier 1: Explicit directed invitations → immediate classify
+    tier1_match = any(re.search(p, combined_text, re.IGNORECASE) for p in INTERVIEW_TIER1_PATTERNS)
+    if tier1_match:
+        results.append(('interview', 0.95))
+    else:
+        # Tier 2: Contextual keyword + action signal required
+        has_keyword = any(re.search(p, combined_text, re.IGNORECASE) for p in INTERVIEW_TIER2_KEYWORDS)
+        has_action = any(re.search(p, combined_text, re.IGNORECASE) for p in INTERVIEW_ACTION_SIGNALS)
+        if has_keyword and has_action:
+            results.append(('interview', 0.88))
+
+    # ── Other categories: standard pattern matching ──
     for category, patterns in [
         ('rejection', REJECTION_PATTERNS),
-        ('interview', INTERVIEW_PATTERNS),
         ('offer', OFFER_PATTERNS),
         ('follow_up', FOLLOWUP_PATTERNS),
         ('applied', APPLIED_PATTERNS),
@@ -308,9 +341,6 @@ def classify_email(email_data):
                 category = 'applied'
                 confidence = max(c for cat, c in results if cat == 'applied')
             else:
-                # Automated emails with interview-like language that don't
-                # also match applied patterns are likely confirmation emails
-                # describing the hiring process, not actual invites.
                 category = 'applied'
                 confidence = 0.75
 

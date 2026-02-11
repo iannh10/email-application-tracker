@@ -131,6 +131,78 @@ DIRECT_OVERRIDE_SENDERS = [
     r'rexpand',
 ]
 
+# ─── Noise / Non-Job Senders & Subjects ──────────────────────────────────────────
+# Emails matching these are classified as "other" before job-pattern matching runs.
+
+NOISE_SENDER_PATTERNS = [
+    # LinkedIn notifications (not recruiter messages)
+    r'notifications?[-@].*linkedin',
+    r'messages-noreply@linkedin',
+    r'invitations@linkedin',
+    r'news@linkedin',
+    r'editors@linkedin',
+    r'digest-noreply@linkedin',
+    # Social / forums
+    r'@reddit\.com',
+    r'@quora\.com',
+    r'@discord\.com',
+    r'@slack\.com',
+    r'@medium\.com',
+    r'@substack\.com',
+    r'@stackoverflow\.com',
+    r'@stackexchange\.com',
+    r'@github\.com',
+    r'@meetup\.com',
+    r'@eventbrite\.com',
+    # Marketing / newsletters
+    r'@mailchimp\.com',
+    r'@sendgrid\.(com|net)',
+    r'@constantcontact\.com',
+    r'@hubspot\.com',
+    r'newsletter@',
+    r'digest@',
+    r'marketing@',
+    r'promo(tion)?s?@',
+    r'info@',
+    r'updates?@',
+    r'news@',
+    r'announce(ment)?s?@',
+    # Shopping / finance / personal services
+    r'@amazon\.',
+    r'@paypal\.',
+    r'@venmo\.',
+    r'@uber\.com',
+    r'@doordash\.com',
+    r'@spotify\.com',
+    r'@netflix\.com',
+    r'@apple\.com',
+    r'@google\.(com|accounts)',
+]
+
+NOISE_SUBJECT_PATTERNS = [
+    r'^your\s+daily\s+digest',
+    r'^your\s+weekly\s+(digest|summary|update)',
+    r'^\d+\s+new\s+(notification|connection|message|invitation|endorsement)',
+    r'connection\s+request',
+    r'endorsed\s+you',
+    r'skill\s+endorsement',
+    r'accepted\s+your\s+(invitation|connection)',
+    r'is\s+now\s+a\s+connection',
+    r'people\s+you\s+may\s+know',
+    r'trending\s+(in|on)\s+your',
+    r'newsletter',
+    r'unsubscribe',
+    r'subscription',
+    r'^(re:\s*)?order\s+(confirm|ship|deliver)',
+    r'^(re:\s*)?receipt\s+(for|from)',
+    r'^(re:\s*)?payment\s+(confirm|received)',
+    r'^(re:\s*)?invoice\s+#',
+    r'\bverify\s+your\s+(email|account)\b',
+    r'password\s+(reset|change)',
+    r'two.factor|2fa|verification\s+code',
+    r'sign.in\s+(attempt|alert)',
+]
+
 
 def _is_automated_sender(sender_email):
     """Check if the sender is an automated/no-reply address."""
@@ -155,6 +227,18 @@ def classify_email(email_data):
 
     combined_text = f"{subject} {snippet} {body}"
     is_automated = _is_automated_sender(sender_email)
+
+    # ── Early exit: classify noise / non-job emails as "other" ──
+    noise_sender = any(re.search(p, sender_email, re.IGNORECASE) for p in NOISE_SENDER_PATTERNS)
+    noise_subject = any(re.search(p, subject, re.IGNORECASE) for p in NOISE_SUBJECT_PATTERNS)
+
+    if noise_sender or noise_subject:
+        return {
+            'category': 'other',
+            'confidence': 0.90,
+            'company_name': '',
+            'job_title': '',
+        }
 
     # ── Force-classify specific senders as "direct" ──
     for pattern in DIRECT_OVERRIDE_SENDERS:

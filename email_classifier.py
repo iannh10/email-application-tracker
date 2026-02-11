@@ -33,52 +33,32 @@ REJECTION_PATTERNS = [
 ]
 
 INTERVIEW_PATTERNS = [
-    # Formal interview scheduling
+    # ── Explicit interview / screening invitations only ──
     (r'schedule\s+(an?\s+)?interview', 0.95),
     (r'interview\s+invitation', 0.95),
-    (r'we\'d\s+like\s+to\s+(invite|schedule)', 0.93),
-    (r'like\s+to\s+(set\s+up|arrange)\s+(a\s+)?(call|meeting|interview|conversation)', 0.93),
+    (r'invite\s+you\s+to\s+(an?\s+)?interview', 0.95),
+    (r'we\'d\s+like\s+to\s+invite\s+you', 0.93),
+    (r'like\s+to\s+(schedule|set\s+up|arrange)\s+(a\s+)?(interview|screen)', 0.93),
     (r'phone\s+screen', 0.90),
     (r'phone\s+interview', 0.90),
     (r'video\s+interview', 0.90),
-    (r'virtual\s+(interview|meeting)', 0.90),
+    (r'virtual\s+interview', 0.90),
     (r'onsite\s+interview', 0.92),
     (r'on-site\s+interview', 0.92),
     (r'technical\s+interview', 0.92),
     (r'coding\s+(challenge|assessment|interview)', 0.88),
-    (r'next\s+round', 0.82),
-    (r'next\s+step(s)?\s+in\s+(the|our)\s+(interview|hiring|recruitment)', 0.88),
-    (r'meet\s+(with\s+)?(the|our)\s+(team|hiring\s+manager)', 0.85),
-    (r'recruiter\s+(screen|call|chat)', 0.88),
-    (r'initial\s+(screen|call|conversation)', 0.82),
-    (r'hiring\s+manager.*review', 0.80),
+    (r'next\s+round\s+(of\s+)?interview', 0.88),
+    (r'next\s+step(s)?\s+in\s+(the|our)\s+interview', 0.88),
+    (r'meet\s+(with\s+)?(the|our)\s+hiring\s+manager', 0.85),
+    (r'recruiter\s+screen', 0.88),
     (r'panel\s+interview', 0.92),
     (r'case\s+(study|interview)', 0.85),
     (r'take-home\s+(assignment|assessment|project)', 0.88),
     (r'assessment\s+(link|invitation|test)', 0.85),
     (r'hackerrank|codility|leetcode|codesignal', 0.85),
-    # Recruiter outreach / availability requests
-    (r'would\s+love\s+to\s+(chat|speak|talk|connect|discuss)\s+with\s+you', 0.85),
-    (r'like\s+to\s+learn\s+more\s+about\s+(you|your)', 0.80),
-    (r'(what|when)\s+(is|does)\s+your\s+(availability|schedule)', 0.88),
-    (r'are\s+you\s+(available|free|open)\s+(for|to|this|next)', 0.85),
-    (r'when\s+are\s+you\s+(available|free)', 0.85),
-    (r'let\s+me\s+know\s+(your|if\s+you\s+have)\s+(availability|time)', 0.82),
-    (r'find\s+a\s+time\s+to\s+(chat|talk|connect|meet|speak)', 0.82),
-    (r'grab\s+(some\s+)?time\s+(to|for)', 0.78),
-    (r'hop\s+on\s+a\s+(quick\s+)?(call|chat)', 0.82),
-    (r'(15|20|30|45)\s*(-|–)?\s*min(ute)?\s+(call|chat|conversation)', 0.82),
-    (r'(quick|brief|short|introductory)\s+(call|chat|conversation|catch-?up)', 0.80),
-    (r'i\s+(came|looked)\s+across\s+your\s+(profile|application|resume|background)', 0.80),
-    (r'your\s+(profile|background|experience|resume)\s+(caught|stood|stands)', 0.80),
-    (r'(impressed|excited|interested)\s+(by|in|about)\s+your\s+(background|experience|profile|application)', 0.80),
-    (r'reach(ing)?\s+out\s+(about|regarding|because|to\s+discuss)', 0.78),
-    (r'loved\s+your\s+(application|resume|background|profile)', 0.80),
-    (r'calendly\.com|schedule.*link', 0.82),
-    (r'book\s+a\s+time', 0.82),
-    (r'available\s+(for|to)\s+(a\s+)?(call|chat|meeting)', 0.78),
-    (r'pick\s+a\s+(time|slot)', 0.80),
-    (r'please\s+(select|choose|pick)\s+a\s+time', 0.82),
+    (r'moved\s+(you\s+)?forward\s+to\s+(the|an?)\s+(interview|screen)', 0.92),
+    (r'advance(d)?\s+(you\s+)?to\s+(the|an?)\s+(interview|next)\s+(round|stage|step)', 0.90),
+    (r'selected\s+for\s+(an?\s+)?interview', 0.92),
 ]
 
 OFFER_PATTERNS = [
@@ -146,6 +126,11 @@ NOREPLY_PATTERNS = [
     r'auto[-_]?reply', r'automated',
 ]
 
+# Senders that should always be classified as "direct" outreach
+DIRECT_OVERRIDE_SENDERS = [
+    r'rexpand',
+]
+
 
 def _is_automated_sender(sender_email):
     """Check if the sender is an automated/no-reply address."""
@@ -170,6 +155,18 @@ def classify_email(email_data):
 
     combined_text = f"{subject} {snippet} {body}"
     is_automated = _is_automated_sender(sender_email)
+
+    # ── Force-classify specific senders as "direct" ──
+    for pattern in DIRECT_OVERRIDE_SENDERS:
+        if re.search(pattern, sender + ' ' + sender_email, re.IGNORECASE):
+            company_name = _extract_company_name(email_data)
+            job_title = _extract_job_title(subject, body)
+            return {
+                'category': 'direct',
+                'confidence': 0.95,
+                'company_name': company_name,
+                'job_title': job_title,
+            }
 
     # ── Subject-line priority: definitive "applied" signals in the subject
     #    always win, even if the body mentions interviews/next steps.

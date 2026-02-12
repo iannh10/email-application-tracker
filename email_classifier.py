@@ -33,23 +33,21 @@ REJECTION_PATTERNS = [
 ]
 
 # ─── INTERVIEW: Strict multi-signal classification ─────────────────────────────
-# Tier 1 — Definitive: the email explicitly invites YOU to an interview.
-#          A single match is enough to classify.
+# Tier 1 — Definitive: the email explicitly invites YOU to an interview/screen.
+#          Every pattern MUST contain the word "interview" or "screen".
 INTERVIEW_TIER1_PATTERNS = [
     r'(we\'?d?|i\'?d?)\s+like\s+to\s+invite\s+you\s+(to|for)\s+(an?\s+)?interview',
     r'invite\s+you\s+to\s+(an?\s+)?(phone|video|virtual|on-?site|technical|panel|final)\s*(round)?\s*interview',
-    r'you\s+(have\s+been|are|were)\s+(selected|chosen|invited)\s+(for|to)\s+(an?\s+)?interview',
+    r'you\s+(have\s+been|are|were)\s+(selected|chosen|invited)\s+(for|to)\s+(an?\s+)?(interview|screen)',
     r'your\s+interview\s+(is|has\s+been)\s+(scheduled|confirmed|set)',
-    r'(pleased|happy|excited)\s+to\s+(invite|advance|move)\s+you\s+(to|forward)',
-    r'we\s+are\s+(moving|advancing)\s+you\s+(forward|to\s+the\s+next)',
-    r'moved\s+you\s+forward\s+to\s+(the|an?)\s+(interview|screen|next\s+round)',
-    r'advance(d)?\s+you\s+to\s+(the|an?)\s+(interview|next)\s+(round|stage|step)',
     r'like\s+to\s+schedule\s+(an?\s+)?interview\s+with\s+you',
-    r'schedule\s+your\s+interview',
+    r'schedule\s+your\s+(interview|screen)',
+    r'moved\s+you\s+forward\s+to\s+(the|an?)\s+(interview|screen)',
+    r'advance(d)?\s+you\s+to\s+(the|an?)\s+interview',
 ]
 
-# Tier 2 — Contextual: these keywords suggest an interview, but only classify
-#          if an ACTION SIGNAL is also present (confirming it's directed at you).
+# Tier 2 — Contextual: interview/screen keyword must appear in the SUBJECT LINE
+#          (not buried in body boilerplate) AND an action signal must be present.
 INTERVIEW_TIER2_KEYWORDS = [
     r'phone\s+screen',
     r'phone\s+interview',
@@ -61,9 +59,7 @@ INTERVIEW_TIER2_KEYWORDS = [
     r'recruiter\s+screen',
     r'coding\s+(challenge|assessment)',
     r'take-?home\s+(assignment|assessment|project|test)',
-    r'case\s+study',
     r'hackerrank|codility|leetcode|codesignal',
-    r'assessment\s+(link|invitation|test)',
 ]
 
 # Action signals that confirm the email is directed at the recipient
@@ -75,43 +71,33 @@ INTERVIEW_ACTION_SIGNALS = [
     r'pick\s+a\s+(time|slot)',
     r'(what|when)\s+(is|are)\s+your\s+(availability|available)',
     r'please\s+complete\s+(the|this|your)',
-    r'attached\s+(is|you\s+will\s+find)',
-    r'(here\s+is|here\s+are)\s+(the|your)\s+(details|link|invite)',
-    r'looking\s+forward\s+to\s+(speaking|meeting|talking)\s+with\s+you',
-    r'(we|i)\s+(look|am\s+looking)\s+forward\s+to\s+(your|meeting)',
 ]
 
-# ─── OFFER: Strict multi-signal classification ─────────────────────────────────
-# Only classify as offer when the email explicitly extends an offer TO the recipient.
+# ─── OFFER: Strict — must explicitly extend an offer TO you ────────────────────
+# Every pattern requires language directed at the recipient (you/your).
+# Removed: 'welcome to the team', 'compensation package', 'start date', 'contingent'
+# as those appear in non-offer emails (process descriptions, rejections mentioning offers).
 OFFER_PATTERNS = [
-    (r'(pleased|happy|excited|delighted)\s+to\s+(extend|offer|present)\s+(you|an\s+offer)', 0.98),
+    (r'(pleased|happy|excited|delighted)\s+to\s+(extend|offer|present)\s+you', 0.98),
     (r'we\s+would\s+like\s+to\s+offer\s+you', 0.98),
-    (r'(extend(ing)?|present(ing)?)\s+(you\s+)?(an?\s+)?(formal\s+)?offer\s+of\s+employment', 0.97),
-    (r'your\s+offer\s+letter\s+(is|has\s+been)', 0.96),
-    (r'(attached|enclosed|find)\s+(is\s+)?(your\s+)?offer\s+letter', 0.96),
-    (r'sign\s+your\s+offer\s+letter', 0.95),
-    (r'accept\s+(the|this|our|your)\s+offer', 0.93),
-    (r'offer\s+(has\s+been|is\s+being)\s+(prepared|finalized|sent)', 0.92),
-    (r'your\s+compensation\s+(package|details)\s+(is|are|include)', 0.90),
-    (r'your\s+(annual|base|starting)\s+salary\s+(will\s+be|is)', 0.90),
-    (r'welcome\s+to\s+the\s+team', 0.88),
-    (r'contingent\s+(upon|on).*offer', 0.88),
-    (r'we\s+are\s+(pleased|excited)\s+to\s+welcome\s+you', 0.92),
+    (r'(extend(ing)?|present(ing)?)\s+you\s+(an?\s+)?(formal\s+)?offer\s+of\s+employment', 0.97),
+    (r'your\s+offer\s+letter\s+(is|has\s+been)\s+(attached|ready|prepared|sent)', 0.96),
+    (r'(attached|enclosed).*your\s+offer\s+letter', 0.96),
+    (r'(please\s+)?(review|sign)\s+your\s+offer\s+letter', 0.95),
+    (r'we\s+are\s+(pleased|excited)\s+to\s+welcome\s+you\s+to', 0.92),
 ]
 
+# ─── FOLLOW-UP: Requires job-context words alongside follow-up phrases ─────────
+# Generic "checking in" or "following up" alone is too broad. Must co-occur with
+# job-related context: application, candidacy, position, role, interview, hiring.
 FOLLOWUP_PATTERNS = [
-    (r'checking\s+in\s+(on|about|regarding)', 0.82),
-    (r'following\s+up\s+(on|about|regarding)', 0.82),
-    (r'status\s+(update|of\s+your)', 0.80),
-    (r'update\s+(on|regarding)\s+(your|the)\s+(application|candidacy|status)', 0.85),
-    (r'where\s+(are\s+)?(you|things)\s+in\s+the\s+process', 0.78),
-    (r'wanted\s+to\s+(follow\s+up|check\s+in|touch\s+base)', 0.80),
-    (r'any\s+(update|news)\s+(on|about|regarding)', 0.75),
-    (r'still\s+(interested|considering)', 0.75),
-    (r'keep\s+you\s+(updated|informed|posted)', 0.72),
-    (r'we\s+are\s+still\s+(reviewing|processing)', 0.78),
-    (r'your\s+application\s+is\s+(still\s+)?(being|under)\s+(reviewed|consideration)', 0.82),
-    (r'timeline\s+(for|on|regarding)\s+(the|this|our)', 0.72),
+    (r'(checking\s+in|following\s+up|follow\s+up)\s+(on|about|regarding)\s+(your|the|my)\s+(application|candidacy|interview|submission)', 0.88),
+    (r'update\s+(on|regarding)\s+your\s+(application|candidacy|interview|status)', 0.88),
+    (r'status\s+(update|of)\s+your\s+(application|candidacy|interview)', 0.85),
+    (r'your\s+application\s+is\s+(still\s+)?(being|under)\s+(reviewed|consideration)', 0.85),
+    (r'we\s+are\s+still\s+(reviewing|processing)\s+your\s+(application|candidacy|resume|materials)', 0.82),
+    (r'wanted\s+to\s+(follow\s+up|check\s+in).{0,30}(application|position|role|interview|candidacy)', 0.82),
+    (r'(any|an?)\s+(update|news)\s+(on|about|regarding)\s+(your|the|my)\s+(application|candidacy|interview)', 0.80),
 ]
 
 APPLIED_PATTERNS = [
@@ -303,10 +289,10 @@ def classify_email(email_data):
     if tier1_match:
         results.append(('interview', 0.95))
     else:
-        # Tier 2: Contextual keyword + action signal required
-        has_keyword = any(re.search(p, combined_text, re.IGNORECASE) for p in INTERVIEW_TIER2_KEYWORDS)
+        # Tier 2: Keyword must be in SUBJECT LINE (not body boilerplate) + action signal
+        has_keyword_in_subject = any(re.search(p, subject, re.IGNORECASE) for p in INTERVIEW_TIER2_KEYWORDS)
         has_action = any(re.search(p, combined_text, re.IGNORECASE) for p in INTERVIEW_ACTION_SIGNALS)
-        if has_keyword and has_action:
+        if has_keyword_in_subject and has_action:
             results.append(('interview', 0.88))
 
     # ── Other categories: standard pattern matching ──

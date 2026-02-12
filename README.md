@@ -1,6 +1,6 @@
-# 📬 Job Application Email Tracker
+# Job Application Email Tracker
 
-A smart email tracker that connects to your Gmail, scans your inbox, and automatically classifies job-application emails into categories — rejections, interviews, offers, follow-ups, applications, and more.
+A Gmail-integrated tool that scans your inbox and classifies job-application emails into categories: rejections, interviews, offers, follow-ups, and applications.
 
 ![Python](https://img.shields.io/badge/Python-3.9+-blue?logo=python)
 ![Flask](https://img.shields.io/badge/Flask-3.1-green?logo=flask)
@@ -8,100 +8,81 @@ A smart email tracker that connects to your Gmail, scans your inbox, and automat
 
 ---
 
-## ✨ Features
+## Features
 
-- **Gmail OAuth2 Integration** — Securely connect your Gmail account (read-only access)
-- **Smart Classification** — Multi-signal algorithm detects interview invitations, rejections, offers, follow-ups, and application confirmations
-- **Auto-Scan** — Background scheduler scans every 15 minutes automatically
-- **Dashboard UI** — Professional dark/light mode dashboard with stats, search, and filtering
-- **Up to 2,000 emails** scanned per run
-- **Noise Filtering** — Automatically filters out LinkedIn notifications, newsletters, forums, and marketing emails
+- **Gmail OAuth2** — Secure read-only access to your inbox
+- **Multi-signal classification** — Two-tier algorithm using sender origin, subject-line analysis, and directed language detection
+- **Auto-scan** — Background scheduler runs every 15 minutes
+- **Dashboard** — Dark/light mode UI with stats, search, and category filtering
+- **Noise filtering** — Automatically excludes LinkedIn notifications, newsletters, forums, and marketing emails
+- **Scans up to 2,000 emails** per run
 
-## 🧠 Classification Algorithm
+## Classification
 
-The classifier uses a multi-signal approach rather than simple keyword matching:
-
-| Category | How It's Detected |
+| Category | Detection Method |
 |---|---|
-| **Interview** | Two-tier system: Tier 1 explicit invitations ("invite you to an interview"), Tier 2 requires subject-line keyword + action signal |
-| **Offer** | Must contain language directed at the recipient ("pleased to offer you") |
-| **Rejection** | Pattern-matched phrases ("decided to move forward with other candidates") |
-| **Applied** | Subject-line priority for confirmation emails ("application received") |
-| **Follow-up** | Requires job-context words alongside follow-up phrases |
-| **Direct** | Outreach from company emails (not job boards or automated senders) |
-| **Other** | Everything else — newsletters, notifications, non-job emails |
+| Interview | Tier 1: explicit invitations ("invite you to an interview"). Tier 2: subject-line keyword + action signal |
+| Offer | Directed language only ("pleased to offer you") |
+| Rejection | Pattern-matched phrases ("decided to move forward with other candidates") |
+| Applied | Subject-line priority for confirmations ("application received") |
+| Follow-up | Follow-up phrase + job-context words (application, candidacy, position) |
+| Direct | Company email outreach (excludes job boards and automated senders) |
+| Other | Non-job emails — newsletters, notifications, social |
 
-## 🚀 Quick Start
+## Setup
 
 ### Prerequisites
 - Python 3.9+
-- A Google Cloud project with Gmail API enabled
+- Google Cloud project with Gmail API enabled
 - OAuth2 credentials (`credentials.json`)
 
-### Setup
+### Installation
 
-1. **Clone the repo**
-   ```bash
-   git clone https://github.com/iannh10/email-application-tracker.git
-   cd email-application-tracker
-   ```
+```bash
+git clone https://github.com/iannh10/email-application-tracker.git
+cd email-application-tracker
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
 
-2. **Create a virtual environment**
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate
-   pip install -r requirements.txt
-   ```
+Place your `credentials.json` in the project root, then:
 
-3. **Set up Google OAuth2**
-   - Go to [Google Cloud Console](https://console.cloud.google.com/)
-   - Enable the **Gmail API**
-   - Create OAuth2 credentials (Desktop or Web application)
-   - Download `credentials.json` and place it in the project root
+```bash
+python app.py
+```
 
-4. **Run the app**
-   ```bash
-   python app.py
-   ```
-   Open [http://localhost:5000](http://localhost:5000) and click **Connect Gmail**.
+Open [http://localhost:5000](http://localhost:5000) and connect your Gmail account.
 
-## 🌐 Deployment (Render)
+## Deployment (Render)
 
-The app is deployment-ready with `Procfile` and `gunicorn`:
-
-1. Push to GitHub
-2. Create a new **Web Service** on [Render](https://render.com)
-3. Set **Build Command**: `pip install -r requirements.txt`
-4. Set **Start Command**: `gunicorn app:app`
-5. Add environment variable: `GOOGLE_CREDENTIALS` = contents of your `credentials.json`
-6. Add your Render URL's callback to Google Console authorized redirect URIs:
+1. Create a **Web Service** on [Render](https://render.com) and connect the repo
+2. Build command: `pip install -r requirements.txt`
+3. Start command: `gunicorn app:app`
+4. Environment variable: `GOOGLE_CREDENTIALS` = contents of `credentials.json`
+5. Add authorized redirect URI in Google Console:
    ```
    https://your-app.onrender.com/api/auth/callback
    ```
 
-## 📁 Project Structure
+## Project Structure
 
 ```
-├── app.py                 # Flask app + API routes + auto-scan scheduler
-├── gmail_auth.py          # OAuth2 authentication flow
-├── email_fetcher.py       # Gmail API email fetching
-├── email_classifier.py    # Multi-signal classification engine
-├── database.py            # SQLite database layer
-├── static/
-│   ├── index.html         # Dashboard HTML
-│   ├── styles.css         # Dark/light theme styles
-│   └── app.js             # Frontend logic
-├── Procfile               # Render deployment
-├── requirements.txt       # Python dependencies
-└── .gitignore
+app.py                 Flask app, API routes, auto-scan scheduler
+gmail_auth.py          OAuth2 authentication
+email_fetcher.py       Gmail API fetching
+email_classifier.py    Multi-signal classification engine
+database.py            SQLite storage
+static/                Frontend (HTML, CSS, JS)
+Procfile               Render deployment config
 ```
 
-## 🔒 Privacy
+## Privacy
 
-- **Read-only** Gmail access — the app never sends, modifies, or deletes emails
-- Credentials and tokens are never committed to git
-- All data is stored locally in SQLite
+- Read-only Gmail access — emails are never sent, modified, or deleted
+- Credentials and tokens excluded from version control
+- Data stored locally in SQLite
 
-## 📄 License
+## License
 
 MIT

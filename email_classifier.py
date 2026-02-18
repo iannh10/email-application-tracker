@@ -44,6 +44,12 @@ INTERVIEW_TIER1_PATTERNS = [
     r'schedule\s+your\s+(interview|screen)',
     r'moved\s+you\s+forward\s+to\s+(the|an?)\s+(interview|screen)',
     r'advance(d)?\s+you\s+to\s+(the|an?)\s+interview',
+    # HireVue / video-assessment invitations
+    r'(complete|take)\s+(your|the|a)\s+hirevue',
+    r'invited\s+to\s+(complete|take)\s+(an?\s+)?(online|virtual|video)\s+(assessment|evaluation|screen)',
+    r'(we\'?d?|i\'?d?)\s+like\s+you\s+to\s+complete\s+(an?\s+)?(assessment|evaluation|hirevue)',
+    r'you\s+(have\s+been|are|were)\s+(selected|chosen|invited)\s+(for|to)\s+(an?\s+)?(assessment|evaluation|coding\s+challenge|hirevue)',
+    r'next\s+step.{0,40}(complete|take)\s+(an?\s+)?(assessment|evaluation|hirevue|coding\s+challenge)',
 ]
 
 # Tier 2 — Contextual: interview/screen keyword must appear in the SUBJECT LINE
@@ -60,6 +66,13 @@ INTERVIEW_TIER2_KEYWORDS = [
     r'coding\s+(challenge|assessment)',
     r'take-?home\s+(assignment|assessment|project|test)',
     r'hackerrank|codility|leetcode|codesignal',
+    # Assessment platforms & terms
+    r'hirevue',
+    r'online\s+assessment',
+    r'(oa|assessment)\s+(invitation|invite)',
+    r'pymetrics|karat|spark\s*hire|hireflix',
+    r'virtual\s+(assessment|evaluation)',
+    r'skills?\s+(assessment|evaluation|test)',
 ]
 
 # Action signals that confirm the email is directed at the recipient
@@ -71,6 +84,10 @@ INTERVIEW_ACTION_SIGNALS = [
     r'pick\s+a\s+(time|slot)',
     r'(what|when)\s+(is|are)\s+your\s+(availability|available)',
     r'please\s+complete\s+(the|this|your)',
+    # Assessment-specific action signals
+    r'(access|start|begin|launch)\s+(your|the)\s+(assessment|evaluation|test|challenge)',
+    r'(assessment|test|challenge|hirevue)\s+(link|url|portal)',
+    r'deadline\s+to\s+complete',
 ]
 
 # ─── OFFER: Strict — must explicitly extend an offer TO you ────────────────────

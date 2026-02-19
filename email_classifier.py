@@ -50,6 +50,12 @@ INTERVIEW_TIER1_PATTERNS = [
     r'(we\'?d?|i\'?d?)\s+like\s+you\s+to\s+complete\s+(an?\s+)?(assessment|evaluation|hirevue)',
     r'you\s+(have\s+been|are|were)\s+(selected|chosen|invited)\s+(for|to)\s+(an?\s+)?(assessment|evaluation|coding\s+challenge|hirevue)',
     r'next\s+step.{0,40}(complete|take)\s+(an?\s+)?(assessment|evaluation|hirevue|coding\s+challenge)',
+    # Real HireVue phrasing: "would like you to participate in a digital interview"
+    r'like\s+you\s+to\s+participate\s+in\s+(an?\s+)?(digital\s+)?(interview|screen|assessment)',
+    r'participate\s+in\s+(an?\s+)?(digital\s+)?(interview|screen|assessment).{0,40}(hirevue|hire\s*vue)',
+    r'powered\s+by\s+(hirevue|hire\s*vue)',
+    # Sender-domain match: any email from hirevue.com with interview/assessment context
+    r'@hirevue\.com',
 ]
 
 # Tier 2 — Contextual: interview/screen keyword must appear in the SUBJECT LINE
@@ -142,6 +148,7 @@ JOB_BOARD_DOMAINS = {
     'applytojob.com', 'ashbyhq.com', 'breezy.hr',
     'recruitee.com', 'jazz.co', 'bamboohr.com',
     'taleo.net', 'successfactors.com',
+    'hirevue.com',
 }
 
 NOREPLY_PATTERNS = [

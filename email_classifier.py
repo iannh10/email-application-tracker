@@ -162,6 +162,17 @@ DIRECT_OVERRIDE_SENDERS = [
     r'rexpand',
 ]
 
+# ─── Interview Platform Domains ────────────────────────────────────────────────
+# Emails from these domains are ALWAYS classified as "interview" regardless of
+# body text. This is the most reliable signal — it doesn't depend on HTML parsing.
+INTERVIEW_PLATFORM_DOMAINS = {
+    'hirevue.com',
+    'sparkhire.com',
+    'hireflix.com',
+    'karat.com',
+    'pymetrics.com',
+}
+
 # ─── Noise / Non-Job Senders & Subjects ──────────────────────────────────────────
 # Emails matching these are classified as "other" before job-pattern matching runs.
 
@@ -282,6 +293,18 @@ def classify_email(email_data):
                 'company_name': company_name,
                 'job_title': job_title,
             }
+
+    # ── Force-classify interview platform senders as "interview" ──
+    # This is the most reliable check — sender domain never depends on body parsing.
+    if sender_domain in INTERVIEW_PLATFORM_DOMAINS:
+        company_name = _extract_company_name(email_data)
+        job_title = _extract_job_title(subject, body)
+        return {
+            'category': 'interview',
+            'confidence': 0.97,
+            'company_name': company_name,
+            'job_title': job_title,
+        }
 
     # ── Subject-line priority: definitive "applied" signals in the subject
     #    always win, even if the body mentions interviews/next steps.

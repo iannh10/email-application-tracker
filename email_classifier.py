@@ -140,6 +140,31 @@ APPLIED_PATTERNS = [
     (r'you\s+(have\s+)?applied\s+(to|for)\s+(the|a|this)', 0.88),
 ]
 
+# ─── DIRECT: Recruiter / company outreach patterns ─────────────────────────────
+# These detect genuine recruiter outreach language. An email must match one of
+# these (or come from a DIRECT_OVERRIDE_SENDERS sender) to be classified as
+# "direct".  The loose domain-based fallback has been intentionally removed.
+DIRECT_OUTREACH_PATTERNS = [
+    # Recruiter found your profile
+    (r'(came|come)\s+across\s+your\s+(profile|resume|background|experience)', 0.92),
+    (r'(found|saw|noticed)\s+your\s+(profile|resume|background)\s+(on|via|through)', 0.92),
+    (r'your\s+(profile|resume|background|experience)\s+(caught|stood\s+out|got)\s+(my|our)', 0.90),
+    # Direct opportunity pitch
+    (r'(reach(ing)?\s+out|contact(ing)?\s+you)\s+(about|regarding|for)\s+(an?|the)\s+(opportunity|position|role|opening)', 0.93),
+    (r'(have|got)\s+(an?|the)\s+(exciting|great|open|new)\s+(opportunity|position|role|opening)\s+(for|that)', 0.90),
+    (r'(think|believe)\s+you\s+(would|could|might|\'d)\s+be\s+(a\s+)?(great|good|strong|perfect)\s+(fit|match|candidate)', 0.90),
+    # Asking if interested
+    (r'(would|will)\s+you\s+be\s+(interested|open)\s+(in|to)\s+(discuss|explore|hear|learn|chat)', 0.88),
+    (r'(interested\s+in|open\s+to)\s+(discuss|explor|hear|learn|chat|a\s+new|this)', 0.85),
+    (r'(love|like)\s+to\s+(discuss|chat|talk|connect)\s+(about|with\s+you\s+about)\s+(a|an?|the|this)\s+(role|position|opportunity)', 0.90),
+    # Recruiter intro
+    (r'i\s+am\s+(a|an?)\s+(recruiter|talent|sourcer|headhunter)', 0.92),
+    (r'(recruiter|sourcer|talent\s+acquisition)\s+(at|from|with)\s+', 0.88),
+    (r'(on\s+behalf\s+of|representing)\s+.{1,40}(looking\s+for|hiring|seeking)', 0.88),
+    # Gauging interest
+    (r'(wanted|want|hoping)\s+to\s+(see\s+if|gauge|check)\s+(you|your)\s+(interest|availability)', 0.88),
+]
+
 # Known no-reply / automated senders from job boards
 JOB_BOARD_DOMAINS = {
     'indeed.com', 'linkedin.com', 'greenhouse.io', 'lever.co',
@@ -348,6 +373,7 @@ def classify_email(email_data):
         ('offer', OFFER_PATTERNS),
         ('follow_up', FOLLOWUP_PATTERNS),
         ('applied', APPLIED_PATTERNS),
+        ('direct', DIRECT_OUTREACH_PATTERNS),
     ]:
         best_confidence = 0.0
         for pattern, confidence in patterns:
@@ -377,9 +403,6 @@ def classify_email(email_data):
                 category = 'applied'
                 confidence = 0.75
 
-    elif _is_direct_company_email(sender_email, sender_domain):
-        category = 'direct'
-        confidence = 0.70
     else:
         category = 'other'
         confidence = 0.50

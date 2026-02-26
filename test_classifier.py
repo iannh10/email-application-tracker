@@ -201,3 +201,111 @@ class TestLegacyInterviewPatterns:
         )
         result = classify_email(email)
         assert result["category"] == "interview"
+
+
+# ────────────────────────────────────────────────────────────────────────────
+# Direct outreach — recruiter / company reaching out proactively
+# ────────────────────────────────────────────────────────────────────────────
+
+class TestDirectOutreach:
+    """Positive cases: genuine recruiter outreach → should be 'direct'."""
+
+    def test_came_across_your_profile(self):
+        email = _make_email(
+            "Opportunity at Acme Corp",
+            "Hi, I came across your profile on LinkedIn and think you'd be a great fit."
+        )
+        result = classify_email(email)
+        assert result["category"] == "direct", f"Expected direct, got {result['category']}"
+
+    def test_reaching_out_about_opportunity(self):
+        email = _make_email(
+            "Software Engineer Role",
+            "I'm reaching out about an opportunity at our company. Would love to chat."
+        )
+        result = classify_email(email)
+        assert result["category"] == "direct"
+
+    def test_recruiter_intro(self):
+        email = _make_email(
+            "Exciting Role",
+            "I am a recruiter at Acme Corp. We have a position that matches your background.",
+            sender_email="jane@acmecorp.com",
+            sender="Jane Smith",
+        )
+        result = classify_email(email)
+        assert result["category"] == "direct"
+
+    def test_would_you_be_interested(self):
+        email = _make_email(
+            "New Opportunity",
+            "Would you be interested in discussing a Senior Engineer role at our company?"
+        )
+        result = classify_email(email)
+        assert result["category"] == "direct"
+
+    def test_great_fit_for_role(self):
+        email = _make_email(
+            "Role at StartupXYZ",
+            "I think you would be a great fit for our open Backend Engineer position."
+        )
+        result = classify_email(email)
+        assert result["category"] == "direct"
+
+    def test_talent_acquisition_from(self):
+        email = _make_email(
+            "Career Opportunity",
+            "I'm a talent acquisition specialist from Meta. Found your profile on LinkedIn.",
+            sender_email="recruiter@meta.com",
+            sender="Meta Recruiting",
+        )
+        result = classify_email(email)
+        assert result["category"] == "direct"
+
+    def test_override_sender_rexpand(self):
+        """Senders in DIRECT_OVERRIDE_SENDERS always classify as 'direct'."""
+        email = _make_email(
+            "Some subject",
+            "Some generic body text.",
+            sender_email="team@rexpand.com",
+            sender="Rexpand",
+        )
+        result = classify_email(email)
+        assert result["category"] == "direct"
+
+
+class TestDirectNegativeCases:
+    """Negative: generic company emails should NOT be classified as 'direct'."""
+
+    def test_generic_company_email_not_direct(self):
+        """A plain email from a company domain without outreach language → 'other'."""
+        email = _make_email(
+            "Company Update",
+            "Here is our quarterly earnings report.",
+            sender_email="ir@somecorp.com",
+            sender="SomeCorp Investor Relations",
+        )
+        result = classify_email(email)
+        assert result["category"] != "direct", f"Should not be direct, got {result['category']}"
+
+    def test_automated_company_email_not_direct(self):
+        """Automated company email without outreach language → not 'direct'."""
+        email = _make_email(
+            "Welcome to our platform",
+            "Thanks for signing up. Here's how to get started.",
+            sender_email="noreply@techcorp.com",
+            sender="TechCorp",
+        )
+        result = classify_email(email)
+        assert result["category"] != "direct"
+
+    def test_job_board_email_not_direct(self):
+        """Email from a job board domain → not 'direct'."""
+        email = _make_email(
+            "New jobs for you",
+            "Here are 5 new jobs matching your search.",
+            sender_email="noreply@indeed.com",
+            sender="Indeed",
+        )
+        result = classify_email(email)
+        assert result["category"] != "direct"

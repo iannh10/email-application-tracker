@@ -180,6 +180,73 @@ body {
     gap: 0.5rem;
 }
 
+/* ─── Dropdown Menu ──────────────────────────────────────────────────────── */
+.menu-wrapper {
+    position: relative;
+}
+
+.menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    min-width: 220px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    box-shadow: var(--shadow-lg);
+    padding: 4px;
+    z-index: 100;
+    animation: menuIn 0.14s var(--ease-out);
+}
+
+.menu[hidden] { display: none; }
+
+@keyframes menuIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: none;
+    background: transparent;
+    color: var(--text-1);
+    font-family: inherit;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    text-align: left;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.12s var(--ease);
+    letter-spacing: -0.005em;
+}
+
+.menu-item:hover {
+    background: var(--bg-hover);
+}
+
+.menu-item:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.menu-item svg {
+    width: 15px;
+    height: 15px;
+    color: var(--text-2);
+    flex-shrink: 0;
+}
+
+.menu-divider {
+    height: 1px;
+    background: var(--border-subtle);
+    margin: 4px 0;
+}
+
 /* ─── Icon Button ────────────────────────────────────────────────────────── */
 .icon-btn {
     display: inline-flex;
@@ -575,6 +642,44 @@ body {
 .email-card:hover {
     border-color: rgba(99, 102, 241, 0.25);
     background: var(--bg-elevated);
+}
+
+.email-card.archived {
+    opacity: 0.55;
+}
+
+.email-card.archived:hover {
+    opacity: 0.85;
+}
+
+.card-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border: none;
+    background: transparent;
+    color: var(--text-3);
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.12s var(--ease);
+    padding: 0;
+    opacity: 0;
+}
+
+.email-card:hover .card-action {
+    opacity: 1;
+}
+
+.card-action:hover {
+    background: var(--bg-hover);
+    color: var(--text-1);
+}
+
+.card-action svg {
+    width: 14px;
+    height: 14px;
 }
 
 .email-card.rejection::before  { background: var(--red); }

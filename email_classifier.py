@@ -30,6 +30,19 @@ REJECTION_PATTERNS = [
     (r'unable\s+to\s+move\s+forward', 0.85),
     (r'not\s+a\s+(good\s+)?match\s+(for|at)\s+this\s+time', 0.80),
     (r'will\s+not\s+be\s+extending\s+an\s+offer', 0.92),
+    # Additions — common phrases previously missed
+    (r'(moving|move)\s+forward\s+with\s+(candidates?|applicants?)\s+(who|whose)', 0.93),
+    (r'(pursu(e|ing)|proceed(ing)?)\s+(with\s+)?(other|another|different)\s+(candidates?|applicants?)', 0.92),
+    (r'you\s+(have\s+not|were\s+not|weren\'?t)\s+(been\s+)?selected', 0.92),
+    (r'your\s+(background|experience|qualifications?|profile|skills?)\s+(did|does|do)\s+not\s+(align|match|fit|meet)', 0.90),
+    (r'other\s+(candidates?|applicants?)\s+whose\s+(qualifications?|experience|background|skills?|profile)', 0.93),
+    (r'(candidates?|applicants?)\s+(who|whose)\s+(more\s+closely|better)\s+(match|align|fit)', 0.92),
+    (r'we\'?ve\s+(chosen|selected|opted)\s+to\s+(move|proceed|go)\s+forward\s+with', 0.90),
+    (r'(keep|retain|hold)\s+your\s+(resume|application|profile|materials)\s+on\s+file', 0.78),
+    (r'not\s+(be\s+)?able\s+to\s+(move|proceed|advance)\s+forward', 0.88),
+    (r'we\s+have\s+(completed|concluded|finalized)\s+(our|the)\s+(search|hiring|recruitment)', 0.85),
+    (r'decided\s+not\s+to\s+(pursue|proceed|advance)', 0.88),
+    (r'(thank\s+you|thanks)\s+for\s+your\s+(interest|time).{0,80}(however|unfortunately|but\s+we)', 0.85),
 ]
 
 # ─── INTERVIEW: Strict multi-signal classification ─────────────────────────────
@@ -44,6 +57,14 @@ INTERVIEW_TIER1_PATTERNS = [
     r'schedule\s+your\s+(interview|screen)',
     r'moved\s+you\s+forward\s+to\s+(the|an?)\s+(interview|screen)',
     r'advance(d)?\s+you\s+to\s+(the|an?)\s+interview',
+    # Additions — common interview invitation phrasings
+    r'(we\'?d?|i\'?d?)\s+like\s+to\s+set\s+up\s+(an?|a\s+time\s+for\s+an?)\s+interview',
+    r'(we\'?d?|i\'?d?)\s+like\s+to\s+(speak|chat|talk|connect|meet)\s+with\s+you\s+about\s+(the|this|your|a|an?)\s+(role|position|opportunity|application|candidacy)',
+    r'hiring\s+manager\s+(would\s+like|wants?|is\s+eager)\s+to\s+(speak|chat|meet|talk|interview)',
+    r'(set\s+up|schedule)\s+(a|an?|some)\s+(time|call|chat|conversation)\s+to\s+(discuss|talk\s+about|chat\s+about)\s+(the|this|your|a)\s+(role|position|opportunity)',
+    r'(move|moving)\s+you\s+(forward\s+)?to\s+the\s+next\s+(round|step|stage)',
+    r'next\s+(round|step|stage).{0,60}(interview|screen|conversation|chat|call\s+with)',
+    r'congrat(ulation)?s.{0,60}(next\s+round|interview|selected\s+to\s+move)',
     # HireVue / video-assessment invitations
     r'(complete|take)\s+(your|the|a)\s+hirevue',
     r'invited\s+to\s+(complete|take)\s+(an?\s+)?(online|virtual|video)\s+(assessment|evaluation|screen)',
@@ -83,13 +104,18 @@ INTERVIEW_TIER2_KEYWORDS = [
 
 # Action signals that confirm the email is directed at the recipient
 INTERVIEW_ACTION_SIGNALS = [
-    r'please\s+(confirm|select|choose|pick|let\s+us\s+know)',
+    r'please\s+(confirm|select|choose|pick|let\s+us\s+know|reply|respond)',
     r'(click|use)\s+(the\s+)?(link|button|calendar)',
-    r'calendly\.com|goodtime\.io|schedule\.\w+',
-    r'book\s+(a|your)\s+(time|slot)',
+    r'calendly\.com|goodtime\.io|schedule\.\w+|savvycal\.com|cal\.com',
+    r'book\s+(a|your|some)\s+(time|slot|call)',
     r'pick\s+a\s+(time|slot)',
     r'(what|when)\s+(is|are)\s+your\s+(availability|available)',
     r'please\s+complete\s+(the|this|your)',
+    # Additions — common scheduling phrases
+    r'(share|send|reply\s+with|provide|let\s+me\s+know)\s+(your\s+)?(availability|some\s+times?|a\s+few\s+times?|your\s+available)',
+    r'(offer|suggest|propose)\s+(a\s+few|some|several)\s+(times?|slots?)',
+    r'which\s+of\s+(these|the\s+following)\s+(times?|slots?|options)\s+work',
+    r'do\s+(any\s+of\s+)?(these|the\s+following)\s+(times?|slots?)\s+work',
     # Assessment-specific action signals
     r'(access|start|begin|launch)\s+(your|the)\s+(assessment|evaluation|test|challenge)',
     r'(assessment|test|challenge|hirevue)\s+(link|url|portal)',
@@ -101,13 +127,29 @@ INTERVIEW_ACTION_SIGNALS = [
 # Removed: 'welcome to the team', 'compensation package', 'start date', 'contingent'
 # as those appear in non-offer emails (process descriptions, rejections mentioning offers).
 OFFER_PATTERNS = [
-    (r'(pleased|happy|excited|delighted)\s+to\s+(extend|offer|present)\s+you', 0.98),
+    (r'(pleased|happy|excited|delighted|thrilled)\s+to\s+(extend|offer|present)\s+you', 0.98),
     (r'we\s+would\s+like\s+to\s+offer\s+you', 0.98),
     (r'(extend(ing)?|present(ing)?)\s+you\s+(an?\s+)?(formal\s+)?offer\s+of\s+employment', 0.97),
     (r'your\s+offer\s+letter\s+(is|has\s+been)\s+(attached|ready|prepared|sent)', 0.96),
     (r'(attached|enclosed).*your\s+offer\s+letter', 0.96),
     (r'(please\s+)?(review|sign)\s+your\s+offer\s+letter', 0.95),
     (r'we\s+are\s+(pleased|excited)\s+to\s+welcome\s+you\s+to', 0.92),
+    # Additions — common offer phrasings previously missed
+    (r'(formal\s+)?offer\s+of\s+employment\s+(for|as|at|with)', 0.95),
+    (r'(we\'?re?|i\'?m)\s+(pleased|happy|excited|delighted|thrilled)\s+to\s+(let\s+you\s+know|share|inform\s+you)\s+that.{0,60}(offer|offering)', 0.94),
+    (r'congrat(ulation)?s.{0,60}(on\s+)?(your\s+)?(offer|new\s+role|new\s+position)', 0.92),
+    (r'(verbal|written|official|formal)\s+offer\s+(for|of|from)', 0.93),
+    (r'(please\s+)?find\s+(attached|enclosed)\s+.{0,40}offer', 0.94),
+    (r'offer\s+(details|package|letter)\s+(for|regarding|attached)', 0.90),
+]
+
+# Subject-line priority: unambiguous offer signals in the subject alone.
+# These strong phrases in the subject are almost never false positives.
+SUBJECT_OFFER_PATTERNS = [
+    r'(^|\s)(job\s+)?offer\s+(letter|of\s+employment|for|from|at)',
+    r'(^|\s)offer\s+letter(\s|$|:|\-)',
+    r'your\s+offer\s+(from|at|for|with)',
+    r'(welcome|congratulations).{0,40}(join(ing)?|team|new\s+role)',
 ]
 
 # ─── FOLLOW-UP: Requires job-context words alongside follow-up phrases ─────────
@@ -121,6 +163,11 @@ FOLLOWUP_PATTERNS = [
     (r'we\s+are\s+still\s+(reviewing|processing)\s+your\s+(application|candidacy|resume|materials)', 0.82),
     (r'wanted\s+to\s+(follow\s+up|check\s+in).{0,30}(application|position|role|interview|candidacy)', 0.82),
     (r'(any|an?)\s+(update|news)\s+(on|about|regarding)\s+(your|the|my)\s+(application|candidacy|interview)', 0.80),
+    # Additions
+    (r'wanted\s+to\s+(reach\s+out|touch\s+base).{0,40}(application|candidacy|position|role|interview)', 0.82),
+    (r'(just\s+a|quick)\s+(update|note)\s+(on|regarding|about)\s+your\s+(application|candidacy|interview)', 0.82),
+    (r'(review|consideration)\s+(is\s+)?still\s+(in\s+progress|ongoing|underway)', 0.80),
+    (r'team\s+is\s+(still\s+)?(reviewing|evaluating|considering)\s+(your|applications)', 0.80),
 ]
 
 APPLIED_PATTERNS = [
@@ -331,8 +378,33 @@ def classify_email(email_data):
             'job_title': job_title,
         }
 
+    # ── Evaluate interview match first so we can use it to disambiguate ──
+    # Tier 1: Explicit directed invitation → strongest interview signal
+    tier1_match = any(re.search(p, combined_text, re.IGNORECASE) for p in INTERVIEW_TIER1_PATTERNS)
+    # Tier 2: Interview keyword in SUBJECT + action signal anywhere
+    has_keyword_in_subject = any(re.search(p, subject, re.IGNORECASE) for p in INTERVIEW_TIER2_KEYWORDS)
+    has_action = any(re.search(p, combined_text, re.IGNORECASE) for p in INTERVIEW_ACTION_SIGNALS)
+    tier2_match = (not tier1_match) and has_keyword_in_subject and has_action
+
+    # ── Subject-line priority: definitive "offer" signals in the subject ──
+    # Offer subjects are highly reliable; check before applied so "Offer Letter
+    # from Acme" isn't ever misclassified.
+    for pattern in SUBJECT_OFFER_PATTERNS:
+        if re.search(pattern, subject, re.IGNORECASE):
+            company_name = _extract_company_name(email_data)
+            job_title = _extract_job_title(subject, body)
+            return {
+                'category': 'offer',
+                'confidence': 0.98,
+                'company_name': company_name,
+                'job_title': job_title,
+            }
+
     # ── Subject-line priority: definitive "applied" signals in the subject
-    #    always win, even if the body mentions interviews/next steps.
+    #    usually win — EXCEPT when the body contains an explicit Tier 1
+    #    interview invitation (e.g., "Thanks for applying — here are the next
+    #    steps for your interview"). In that case the real classification is
+    #    interview, not applied.
     SUBJECT_APPLIED_PATTERNS = [
         r'(thank\s+you|thanks)\s+for\s+(your\s+)?(applying|application|interest)',
         r'application\s+(received|confirmed|submitted)',
@@ -341,31 +413,25 @@ def classify_email(email_data):
         r'you\s+(have\s+)?(successfully\s+)?applied\s+(for|to)',
         r'your\s+(application|submission)\s+has\s+been\s+(received|submitted)',
     ]
-    for pattern in SUBJECT_APPLIED_PATTERNS:
-        if re.search(pattern, subject, re.IGNORECASE):
-            company_name = _extract_company_name(email_data)
-            job_title = _extract_job_title(subject, body)
-            return {
-                'category': 'applied',
-                'confidence': 0.98,
-                'company_name': company_name,
-                'job_title': job_title,
-            }
+    if not tier1_match:
+        for pattern in SUBJECT_APPLIED_PATTERNS:
+            if re.search(pattern, subject, re.IGNORECASE):
+                company_name = _extract_company_name(email_data)
+                job_title = _extract_job_title(subject, body)
+                return {
+                    'category': 'applied',
+                    'confidence': 0.98,
+                    'company_name': company_name,
+                    'job_title': job_title,
+                }
 
     # Run all pattern matchers
     results = []
 
-    # ── Interview: Two-tier detection ──
-    # Tier 1: Explicit directed invitations → immediate classify
-    tier1_match = any(re.search(p, combined_text, re.IGNORECASE) for p in INTERVIEW_TIER1_PATTERNS)
     if tier1_match:
         results.append(('interview', 0.95))
-    else:
-        # Tier 2: Keyword must be in SUBJECT LINE (not body boilerplate) + action signal
-        has_keyword_in_subject = any(re.search(p, subject, re.IGNORECASE) for p in INTERVIEW_TIER2_KEYWORDS)
-        has_action = any(re.search(p, combined_text, re.IGNORECASE) for p in INTERVIEW_ACTION_SIGNALS)
-        if has_keyword_in_subject and has_action:
-            results.append(('interview', 0.88))
+    elif tier2_match:
+        results.append(('interview', 0.88))
 
     # ── Other categories: standard pattern matching ──
     for category, patterns in [
@@ -391,17 +457,16 @@ def classify_email(email_data):
         category = results[0][0]
         confidence = results[0][1]
 
-        # Smart override: if an automated/no-reply sender matches both
-        # "interview" and "applied", it's almost certainly an application
-        # confirmation, not a real interview invite.
-        if is_automated and category == 'interview':
+        # Smart override: if an automated/no-reply sender only matches "interview"
+        # via the weaker Tier 2 signal (not Tier 1) AND also matches "applied",
+        # it's almost certainly an application confirmation with boilerplate
+        # mentioning interviews, not a real interview invite.
+        # Tier 1 matches are explicit and specific enough to trust even from ATSes.
+        if is_automated and category == 'interview' and not tier1_match:
             applied_match = any(c == 'applied' for c, _ in results)
             if applied_match:
                 category = 'applied'
                 confidence = max(c for cat, c in results if cat == 'applied')
-            else:
-                category = 'applied'
-                confidence = 0.75
 
     else:
         category = 'other'

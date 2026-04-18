@@ -23,7 +23,7 @@ def _get_redirect_uri():
     render_url = os.environ.get('RENDER_EXTERNAL_URL')
     if render_url:
         return f"{render_url}/api/auth/callback"
-    return os.environ.get('REDIRECT_URI', 'http://127.0.0.1:5000/api/auth/callback')
+    return os.environ.get('REDIRECT_URI', 'http://127.0.0.1:8080/api/auth/callback')
 
 
 def _get_credentials_file():

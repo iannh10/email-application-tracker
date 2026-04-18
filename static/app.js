@@ -5,6 +5,11 @@
 // ─── SVG Icons ───────────────────────────────────────────────────────────────
 const IC = {
     scan:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>`,
+    sparkle: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg>`,
+    archive: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg>`,
+    restore: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-15-6.7L3 13"/></svg>`,
+    trash:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>`,
+    more:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>`,
     sun:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>`,
     moon:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>`,
     search:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>`,
@@ -29,6 +34,7 @@ const state = {
     totalPages: 1,
     totalEmails: 0,
     isScanning: false,
+    isReclassifying: false,
     isLoading: true,
     theme: localStorage.getItem('theme') || 'dark',
 };
@@ -43,6 +49,7 @@ const CATEGORIES = {
     applied:   { label: 'Applied' },
     direct:    { label: 'Direct' },
     other:     { label: 'Other' },
+    archived:  { label: 'Archived' },
 };
 
 // ─── API ──────────────────────────────────────────────────────────────────────
@@ -105,7 +112,7 @@ async function loadEmails() {
 
 // ─── Actions ──────────────────────────────────────────────────────────────────
 async function scanEmails() {
-    if (state.isScanning) return;
+    if (state.isScanning || state.isReclassifying) return;
     state.isScanning = true;
     renderHeaderActions();
     showToast('Scanning Gmail for job emails…', 'info');
@@ -118,6 +125,94 @@ async function scanEmails() {
         await loadDashboard();
     } else {
         showToast(result?.error || 'Scan failed.', 'error');
+        renderHeaderActions();
+    }
+}
+
+async function archiveEmail(emailId, event) {
+    if (event) event.stopPropagation();
+    const result = await api(`/api/emails/${emailId}/archive`, { method: 'POST' });
+    if (result?.success) {
+        showToast('Archived', 'success');
+        await Promise.all([loadStats(), loadEmails()]);
+        renderEmailList();
+        renderCategoryTabs();
+        renderPagination();
+    }
+}
+
+async function unarchiveEmail(emailId, event) {
+    if (event) event.stopPropagation();
+    const result = await api(`/api/emails/${emailId}/unarchive`, { method: 'POST' });
+    if (result?.success) {
+        showToast('Restored to active', 'success');
+        await Promise.all([loadStats(), loadEmails()]);
+        renderEmailList();
+        renderCategoryTabs();
+        renderPagination();
+    }
+}
+
+async function bulkArchiveRejections() {
+    const count = state.stats.categories?.rejection || 0;
+    if (count === 0) {
+        showToast('No active rejections to archive.', 'info');
+        return;
+    }
+    if (!confirm(`Archive all ${count} rejection emails? They'll be moved to the Archived tab and hidden from the main view.`)) return;
+
+    const result = await api('/api/archive/bulk', {
+        method: 'POST',
+        body: JSON.stringify({ category: 'rejection' }),
+    });
+    if (result?.success) {
+        showToast(result.message, 'success');
+        await loadDashboard();
+    }
+}
+
+async function cleanupOld() {
+    const months = prompt(
+        'Delete emails older than how many months?\n\n' +
+        'This permanently removes only "other" (noise) emails older than the threshold. ' +
+        'Rejections, interviews, offers, etc. are kept.\n\n' +
+        'Enter number of months (e.g. 6):',
+        '6'
+    );
+    if (!months) return;
+    const days = Math.round(parseFloat(months) * 30);
+    if (!days || days < 1) {
+        showToast('Invalid number of months.', 'error');
+        return;
+    }
+
+    const result = await api('/api/cleanup', {
+        method: 'POST',
+        body: JSON.stringify({ days, categories: ['other'] }),
+    });
+    if (result?.success) {
+        showToast(result.message, 'success');
+        await loadDashboard();
+    }
+}
+
+async function reclassifyEmails() {
+    if (state.isScanning || state.isReclassifying) return;
+    state.isReclassifying = true;
+    renderHeaderActions();
+    showToast('Re-classifying all stored emails…', 'info');
+
+    const result = await api('/api/reclassify', { method: 'POST', body: JSON.stringify({}) });
+    state.isReclassifying = false;
+
+    if (result?.success) {
+        const msg = result.changed > 0
+            ? `${result.changed} of ${result.total} emails were re-categorized.`
+            : `All ${result.total} emails are already correctly categorized.`;
+        showToast(msg, 'success');
+        await loadDashboard();
+    } else {
+        showToast(result?.error || 'Reclassify failed.', 'error');
         renderHeaderActions();
     }
 }
@@ -217,11 +312,36 @@ function renderDashboard() {
 }
 
 function renderHeaderActions() {
+    const busy = state.isScanning || state.isReclassifying;
     document.getElementById('headerActions').innerHTML = `
+        <div class="menu-wrapper">
+            <button class="icon-btn" onclick="toggleMenu(event)" title="More actions">
+                ${IC.more}
+            </button>
+            <div class="menu" id="headerMenu" hidden>
+                <button class="menu-item" onclick="closeMenu(); bulkArchiveRejections()">
+                    ${IC.archive}
+                    <span>Archive all rejections</span>
+                </button>
+                <button class="menu-item" onclick="closeMenu(); cleanupOld()">
+                    ${IC.trash}
+                    <span>Clean up old noise…</span>
+                </button>
+                <button class="menu-item" onclick="closeMenu(); restoreArchived()">
+                    ${IC.restore}
+                    <span>Restore all archived</span>
+                </button>
+                <div class="menu-divider"></div>
+                <button class="menu-item" onclick="closeMenu(); reclassifyEmails()" ${busy ? 'disabled' : ''}>
+                    ${IC.sparkle}
+                    <span>Re-classify stored emails</span>
+                </button>
+            </div>
+        </div>
         <button class="icon-btn" onclick="toggleTheme()" title="Toggle theme">
             ${state.theme === 'dark' ? IC.sun : IC.moon}
         </button>
-        <button class="btn btn-primary ${state.isScanning ? 'loading' : ''}" onclick="scanEmails()" ${state.isScanning ? 'disabled' : ''}>
+        <button class="btn btn-primary ${state.isScanning ? 'loading' : ''}" onclick="scanEmails()" ${busy ? 'disabled' : ''}>
             <span class="spinner"></span>
             ${state.isScanning ? '' : IC.scan}
             <span class="btn-label">${state.isScanning ? 'Scanning…' : 'Scan'}</span>
@@ -231,6 +351,36 @@ function renderHeaderActions() {
             <span class="btn-label">Sign out</span>
         </button>
     `;
+}
+
+function toggleMenu(event) {
+    event.stopPropagation();
+    const m = document.getElementById('headerMenu');
+    if (!m) return;
+    const opening = m.hasAttribute('hidden');
+    m.toggleAttribute('hidden');
+    if (opening) {
+        setTimeout(() => document.addEventListener('click', closeMenu, { once: true }), 0);
+    }
+}
+
+function closeMenu() {
+    const m = document.getElementById('headerMenu');
+    if (m) m.setAttribute('hidden', '');
+}
+
+async function restoreArchived() {
+    const archived = state.stats.archived || 0;
+    if (archived === 0) {
+        showToast('No archived emails to restore.', 'info');
+        return;
+    }
+    if (!confirm(`Restore all ${archived} archived emails to the active view?`)) return;
+    const result = await api('/api/archive/restore', { method: 'POST' });
+    if (result?.success) {
+        showToast(result.message, 'success');
+        await loadDashboard();
+    }
 }
 
 function renderStats() {
@@ -264,7 +414,13 @@ function renderCategoryTabs() {
     const total = state.stats.total || 0;
 
     tabs.innerHTML = Object.entries(CATEGORIES).map(([key, conf]) => {
-        const count = key === 'all' ? total : (cats[key] || 0);
+        let count;
+        if (key === 'all')           count = total;
+        else if (key === 'archived') count = state.stats.archived || 0;
+        else                         count = cats[key] || 0;
+
+        if (key === 'archived' && count === 0) return '';
+
         const active = state.currentCategory === key ? 'active' : '';
         return `
             <button class="tab-btn ${active}" onclick="setCategory('${key}')">
@@ -303,13 +459,19 @@ function renderEmailList() {
         const sep = company && jobTitle
             ? '<span class="email-divider">·</span>' : '';
 
+        const isArchived = !!email.is_archived;
+        const action = isArchived
+            ? `<button class="card-action" onclick='unarchiveEmail(${JSON.stringify(email.id)}, event)' title="Restore to active">${IC.restore}</button>`
+            : `<button class="card-action" onclick='archiveEmail(${JSON.stringify(email.id)}, event)' title="Archive">${IC.archive}</button>`;
+
         return `
-            <div class="email-card ${email.category}" onclick='showEmailDetail(${JSON.stringify(email.id)})'>
+            <div class="email-card ${email.category}${isArchived ? ' archived' : ''}" onclick='showEmailDetail(${JSON.stringify(email.id)})'>
                 <div class="email-header">
                     <div class="email-subject">${escapeHtml(email.subject || '(No subject)')}</div>
                     <div class="email-meta">
                         <span class="email-date">${date}</span>
                         <span class="category-badge ${email.category}">${cat.label}</span>
+                        ${action}
                     </div>
                 </div>
                 <div class="email-info">

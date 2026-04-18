@@ -55,40 +55,73 @@ def build_search_query(max_results=500):
     return query
 
 
-def fetch_emails(max_results=2000):
-    """Fetch job-related emails from Gmail."""
+def list_message_ids(max_results=5000):
+    """
+    List all Gmail message IDs matching the job-query. This is fast because it
+    doesn't fetch bodies — just IDs. Returns a list of message-id strings.
+    """
     service = get_gmail_service()
     if not service:
         return []
 
     query = build_search_query()
-    emails = []
+    ids = []
     page_token = None
 
-    while len(emails) < max_results:
+    while len(ids) < max_results:
         try:
             results = service.users().messages().list(
                 userId='me',
                 q=query,
-                maxResults=min(100, max_results - len(emails)),
-                pageToken=page_token
+                maxResults=min(500, max_results - len(ids)),
+                pageToken=page_token,
             ).execute()
         except Exception as e:
-            print(f"Error fetching email list: {e}")
+            print(f"[Fetch] Error listing message IDs: {e}")
             break
 
         messages = results.get('messages', [])
         if not messages:
             break
 
-        for msg_meta in messages:
-            email_data = _fetch_single_email(service, msg_meta['id'])
-            if email_data:
-                emails.append(email_data)
+        ids.extend(m['id'] for m in messages)
 
         page_token = results.get('nextPageToken')
         if not page_token:
             break
+
+    return ids
+
+
+def fetch_emails(max_results=2000, known_ids=None, progress=None):
+    """
+    Fetch job-related emails from Gmail.
+
+    If `known_ids` is provided (a set of message IDs already in the DB), those
+    messages are skipped entirely — only new emails are downloaded. This makes
+    repeat scans near-instant.
+
+    `progress` is an optional callback receiving (done, total) after each email.
+    """
+    service = get_gmail_service()
+    if not service:
+        return []
+
+    known_ids = known_ids or set()
+
+    all_ids = list_message_ids(max_results=max_results)
+    new_ids = [mid for mid in all_ids if mid not in known_ids]
+
+    print(f"[Fetch] Gmail has {len(all_ids)} matching emails; "
+          f"{len(known_ids)} already known, {len(new_ids)} new to download.")
+
+    emails = []
+    for i, msg_id in enumerate(new_ids, 1):
+        email_data = _fetch_single_email(service, msg_id)
+        if email_data:
+            emails.append(email_data)
+        if progress and (i % 25 == 0 or i == len(new_ids)):
+            progress(i, len(new_ids))
 
     return emails
 
